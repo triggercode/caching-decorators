@@ -38,25 +38,30 @@ describe('the \'decorators\' test', () => {
 
   it('should cache values if no tracked property changes and should invalidate cache if a property changes', async () => {
 
+    // test with default values
     const res = await decoratorsTest.concatInputs();
     assert.ok(concatInputsSpy.calledOnce);
     assert.strictEqual(res, 'input1input2');
 
+    // assure the cache is hit
     const res2 = await decoratorsTest.concatInputs();
-    assert.ok(concatInputsSpy.calledOnce);
+    assert.ok(concatInputsSpy.calledOnce); // still only called once as cached
     assert.strictEqual(res2, 'input1input2');
 
+    // assure that changing the input invalidates the cache
     decoratorsTest.input1 = 'new';
     const res3 = await decoratorsTest.concatInputs();
-    assert.ok(concatInputsSpy.calledTwice);
+    assert.ok(concatInputsSpy.calledTwice); // called twice as cache was dirty
     assert.strictEqual(res3, 'newinput2');
 
+    // assure that even after invalidating the cache hits again
     const res4 = await decoratorsTest.concatInputs();
-    assert.ok(concatInputsSpy.calledTwice);
+    assert.ok(concatInputsSpy.calledTwice); // still called twice as cached
     assert.strictEqual(res4, 'newinput2');
   });
 
   it('should invalidate cache if it depends on other cache and the other cache is invalidated', async () => {
+
     const res = await decoratorsTest.hashInputs();
     assert.ok(concatInputsSpy.notCalled);
     assert.ok(hashInputsSpy.calledOnce);
