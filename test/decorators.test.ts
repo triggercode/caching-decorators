@@ -1,7 +1,7 @@
 import assert from 'assert';
 import crypto from 'crypto';
 import { spy } from 'sinon';
-import { cache, tracked } from '../src/decorators';
+import { cache, tracked } from '../src/index';
 
 function hashString(algorithm: string, input: string) {
   return crypto.createHash(algorithm).update(input).digest('hex');
