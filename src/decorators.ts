@@ -1,4 +1,4 @@
-/******************************************************************************* 
+/*******************************************************************************
  * Types
 *******************************************************************************/
 type TMethodName = string;
@@ -15,15 +15,13 @@ interface ICacheDescriptor extends TypedPropertyDescriptor<any> {
   value?: () => Promise<any>;
 }
 
-
-/******************************************************************************* 
+/*******************************************************************************
  * Variables
 *******************************************************************************/
 const objectToDirtyStates = new WeakMap<object, TIsDirtyMap>();
 const objectToDependencies = new WeakMap<object, TPropertiesDependencies>();
 
-
-/******************************************************************************* 
+/*******************************************************************************
  * Functions
 *******************************************************************************/
 
@@ -37,22 +35,22 @@ function updateDirtyStates(targetObject: object, propertyName: string) {
 
 /**
  * Initially builds the dependencies for the decorated targetObjects methodName.
- *  
+ *
  * Example for the map *dependencies* that would be created with:
- * 
+ *
  * @cache('firstName', 'lastName', 'data')
  * async getFullName () { ... }
- * 
+ *
  * @cache('firstName')
  * async getNameSlug () { ... }
- * 
+ *
  * {
  *   firstName: [getFullName, getNameSlug],
  *   lastName: [getFullName],
  *   data: [getFullName],
  *   ...: [getFullName],
  * }
- * 
+ *
  * @param {...string} dependantProps - Depending properties on which the cache should be invalidated.
  * @param {object} targetObject - class object
  * @param {TMethodName} methodName - cache name
@@ -135,7 +133,7 @@ function setDirtyState(targetObject: object, methodName: TMethodName) {
   }
 }
 
-/******************************************************************************* 
+/*******************************************************************************
  * Decorators
 *******************************************************************************/
 
@@ -157,7 +155,6 @@ export function tracked(targetObject: object, propertyName: string) {
     }
   });
 }
-
 
 /**
  * Method decorator to cache the return value of the method. The method called only at first time and if one of depending properties changes.
