@@ -13,12 +13,21 @@ interface ICacheDescriptor extends TypedPropertyDescriptor<any> {
 const targetCacheMap = new WeakMap<object, TIsDirtyMap>();
 const targetKeyCacheNameMap = new WeakMap<object, TPropertyCacheNameMap>();
 
-function isCacheDirty(target: object, key: string): boolean {
+/**
+ * @param {object} target - class object
+ * @param {string} cacheName - name of the cache to be checked if dirty
+ * @return {boolean} is cache dirty
+ */
+function isCacheDirty(target: object, cacheName: string): boolean {
   const isDirtyMap = targetCacheMap.get(target);
 
-  return isDirtyMap ? isDirtyMap[key] : false;
+  return isDirtyMap ? isDirtyMap[cacheName] : false;
 }
 
+/**
+ * @param {object} target - class object
+ * @param {string} cacheName - name of the cache to be invalidated
+ */
 function invalidateCache(target: object, cacheName: string) {
   let isDirtyMap = targetCacheMap.get(target);
 
@@ -32,6 +41,10 @@ function invalidateCache(target: object, cacheName: string) {
   }
 }
 
+/**
+ * @param {object} target - class object
+ * @param {string} cacheName - updated cache name
+ */
 function cacheUpdated(target: object, cacheName: string) {
   const isDirtyMap = targetCacheMap.get(target);
 
@@ -40,6 +53,10 @@ function cacheUpdated(target: object, cacheName: string) {
   }
 }
 
+/**
+ * @param {object} target - class object
+ * @return {WeakMap<object, TPropertyCacheNameMap>}
+ */
 function getCacheNameMap(target: object) {
   let propertyMap = targetKeyCacheNameMap.get(target);
   if (!propertyMap) {
@@ -50,6 +67,11 @@ function getCacheNameMap(target: object) {
   return propertyMap;
 }
 
+/**
+ * @param {...string} dependingProperties - Depending properties on which the cache should be invalidated.
+ * @param {object} target - class object
+ * @param {string} cacheName - cache name
+ */
 function buildPropertyCacheNameMap(dependingProperties: string[], target: object, cacheName: string) {
   const propertyCacheMap = getCacheNameMap(target);
 
@@ -63,7 +85,14 @@ function buildPropertyCacheNameMap(dependingProperties: string[], target: object
   targetKeyCacheNameMap.set(target, propertyCacheMap);
 }
 
-function invalidateCaches(target: object, propertyCacheMap: TPropertyCacheNameMap, propertyName) {
+/**
+ * Invalidate all caches that are depending on this property. This function is recrucive.
+ *
+ * @param {object} target - class object
+ * @param {TPropertyCacheNameMap} propertyCacheMap - class object
+ * @param {string} propertyName - name of the dirty object property
+ */
+function invalidateCaches(target: object, propertyCacheMap: TPropertyCacheNameMap, propertyName: string) {
   const cachePropertyNames = propertyCacheMap[propertyName];
 
   if (cachePropertyNames) {
@@ -74,11 +103,22 @@ function invalidateCaches(target: object, propertyCacheMap: TPropertyCacheNameMa
   }
 }
 
+/**
+ * Invalidate all caches that are depending on this property
+ *
+ * @param {object} target - class object
+ * @param {string} propertyName - name of the updated object property
+ */
 function propertyUpdated(target: object, propertyName: string) {
   const propertyCacheMap = getCacheNameMap(target);
   invalidateCaches(target, propertyCacheMap, propertyName);
 }
 
+/**
+ * Method decorator to cache the return value of the method. The method called only at first time and if one of depending properties changes.
+ *
+ * @param {...string} dependingProperties - Depending properties on which the cache should be invalidated.
+ */
 export function cache(...dependingProperties: string[]) {
   let cacheValue: any;
 
@@ -105,6 +145,10 @@ export function cache(...dependingProperties: string[]) {
   };
 }
 
+/**
+ * Tracked changes of a property to reference them in the cache method decorator
+ *
+ */
 export function tracked(target: object, key: string) {
   let value: any;
   Object.defineProperty(target, key, {
