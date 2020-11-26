@@ -37,4 +37,5 @@ const main = async () => {
   }
 };
 
+// tslint:disable-next-line: no-floating-promises
 main();
