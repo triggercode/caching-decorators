@@ -2,8 +2,8 @@
   "name": "caching-decorators",
   "version": "1.0.0",
   "description": "",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec './node_modules/ts-node/dist/bin.js' src/index.ts",
     "start:debug": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec 'node --inspect-brk=127.0.0.1 -r ts-node/register' src/index.ts",
