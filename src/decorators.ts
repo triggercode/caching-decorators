@@ -50,10 +50,10 @@ function getCacheNameMap(target: object) {
   return propertyMap;
 }
 
-function buildPropertyCacheNameMap(properties: string[], target: object, cacheName: string) {
+function buildPropertyCacheNameMap(dependingProperties: string[], target: object, cacheName: string) {
   const propertyCacheMap = getCacheNameMap(target);
 
-  for (const propertyName of properties) {
+  for (const propertyName of dependingProperties) {
     if (!propertyCacheMap[propertyName]) {
       propertyCacheMap[propertyName] = [cacheName];
     } else {
@@ -79,7 +79,7 @@ function propertyUpdated(target: object, propertyName: string) {
   invalidateCaches(target, propertyCacheMap, propertyName);
 }
 
-export function cache(...fieldNames: string[]) {
+export function cache(...dependingProperties: string[]) {
   let cacheValue: any;
 
   return function (
@@ -91,7 +91,7 @@ export function cache(...fieldNames: string[]) {
       throw Error('No valid property descriptor value. Property descriptor value should be \'() => Promise<any>\'');
     }
 
-    buildPropertyCacheNameMap(fieldNames, target, key);
+    buildPropertyCacheNameMap(dependingProperties, target, key);
     const originalMethod = descriptor.value.bind(target);
 
     descriptor.value = async () => {
