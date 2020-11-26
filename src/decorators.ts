@@ -10,7 +10,7 @@ const targetCacheMap = new WeakMap<object, TIsDirtyMap>()
 const targetKeyCacheNameMap = new WeakMap<object, TPropertyCacheNameMap>();
 
 function isCacheDirty(target: object, key: string): boolean {
-  let isDirtyMap = targetCacheMap.get(target);
+  const isDirtyMap = targetCacheMap.get(target);
 
   return isDirtyMap ? isDirtyMap[key] : false;
 }
@@ -47,7 +47,7 @@ function getCacheNameMap(target) {
   return propertyMap;
 }
 
-function buildPropertyCacheNameMap(properties: string[], target, cacheName) {
+function buildPropertyCacheNameMap(properties: string[], target, cacheName: string) {
   const propertyCacheMap = getCacheNameMap(target);
 
   for (const propertyName of properties) {
@@ -60,15 +60,20 @@ function buildPropertyCacheNameMap(properties: string[], target, cacheName) {
   targetKeyCacheNameMap.set(target, propertyCacheMap);
 }
 
-function invalidateCaches(target, propertyName) {
-  const propertyCacheMap = getCacheNameMap(target);
+function invalidateCaches(target, propertyCacheMap: TPropertyCacheNameMap, propertyName) {
   const cachePropertyNames = propertyCacheMap[propertyName];
 
   if (cachePropertyNames) {
     for (const cachePropertyName of cachePropertyNames) {
       invalidateCache(target, cachePropertyName);
+      invalidateCaches(target, propertyCacheMap, cachePropertyName);
     }
   }
+}
+
+function propertyUpdated(target, propertyName: string) {
+  const propertyCacheMap = getCacheNameMap(target);
+  invalidateCaches(target, propertyCacheMap, propertyName);
 }
 
 export function cache(...fieldNames: string[]) {
@@ -104,7 +109,7 @@ export function tracked(target, key: string) {
     },
     set(newValue) {
       if (target[key] !== newValue) {
-        invalidateCaches(target, key);
+        propertyUpdated(target, key);
       }
       value = newValue;
     }

@@ -31,6 +31,9 @@ const main = async () => {
     console.log('get cache', await util.getFullName());
     console.log('get cache', await util.getFullName());
 
+    util.data = 'Nach';
+    console.log('get cache', await util.getFullName());
+    console.log('get cache', await util.getFullName());
 
   } catch (error) {
     console.error(error);

@@ -12,7 +12,7 @@ export default class Utils {
     this.firstName = firstName;
     this.lastName = lastName;
     eventEmitter.on('new-data', (data) => {
-      this.data = data.id;
+      this.data = data;
     });
   }
 
@@ -22,7 +22,7 @@ export default class Utils {
     return this.data;
   }
 
-  @cache("firstName", "lastName")
+  @cache("firstName", "lastName", "getCache")
   async getFullName() {
     console.log('no cache use');
 
