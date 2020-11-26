@@ -1,19 +1,16 @@
 import { EventEmitter } from 'events';
-import Utils from './utils'
-
+import Utils from './utils';
 
 const main = async () => {
   try {
 
-
     const eventEmitter = new EventEmitter();
-    const util = new Utils(eventEmitter, "Nico", "Lazarus");
+    const util = new Utils(eventEmitter, 'Nico', 'Lazarus');
 
     util.foo = 'hallo';
 
     console.log('get cache', await util.getCache());
     console.log('get cache', await util.getCache());
-
 
     eventEmitter.emit('new-data', {
       id: 'newContract'
@@ -21,7 +18,6 @@ const main = async () => {
 
     console.log('get cache', await util.getCache());
     console.log('get cache', await util.getCache());
-
 
     console.log('get cache', await util.getFullName());
     console.log('get cache', await util.getFullName());
@@ -39,7 +35,6 @@ const main = async () => {
     console.error(error);
 
   }
-}
-
+};
 
 main();

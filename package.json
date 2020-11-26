@@ -8,6 +8,10 @@
     "start:debug": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec 'node --inspect-brk=127.0.0.1 -r ts-node/register' src/index.ts",
     "test:dev": "NODE_ENV=seed ts-node --files src/ && NODE_ENV=test ts-mocha --inspect=0.0.0.0 --watch --watch-files src, tests/**/*.ts -p tsconfig.test.json \"test/**/*.test.ts\" --timeout 10000"
   },
+  "directories": {
+    "lib": "src",
+    "test": "test/"
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {

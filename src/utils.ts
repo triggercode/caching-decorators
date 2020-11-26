@@ -3,7 +3,7 @@ import { cache, tracked } from './decorators';
 
 export default class Utils {
   public foo: any;
-  @tracked public data: any = "Foo";
+  @tracked public data: any = 'Foo';
   @tracked public firstName: any;
   @tracked public lastName: any;
 
@@ -16,17 +16,17 @@ export default class Utils {
     });
   }
 
-  @cache("data")
+  @cache('data')
   async getCache() {
     console.log('triggered');
     return this.data;
   }
 
-  @cache("firstName", "lastName", "getCache")
+  @cache('firstName', 'lastName', 'getCache')
   async getFullName() {
     console.log('no cache use');
 
-    return `${this.firstName} ${this.lastName}`
+    return `${this.firstName} ${this.lastName}`;
   }
 
   get hasData() {

@@ -1,12 +1,16 @@
 
 type TIsDirtyMap = {
   [cacheName: string]: boolean;
-}
+};
 type TPropertyCacheNameMap = {
   [propertyName: string]: string[];
+};
+
+interface ICacheDescriptor extends TypedPropertyDescriptor<any> {
+  value?: () => Promise<any>;
 }
 
-const targetCacheMap = new WeakMap<object, TIsDirtyMap>()
+const targetCacheMap = new WeakMap<object, TIsDirtyMap>();
 const targetKeyCacheNameMap = new WeakMap<object, TPropertyCacheNameMap>();
 
 function isCacheDirty(target: object, key: string): boolean {
@@ -15,7 +19,7 @@ function isCacheDirty(target: object, key: string): boolean {
   return isDirtyMap ? isDirtyMap[key] : false;
 }
 
-function invalidateCache(target, cacheName: string) {
+function invalidateCache(target: object, cacheName: string) {
   let isDirtyMap = targetCacheMap.get(target);
 
   if (isDirtyMap === undefined) {
@@ -28,7 +32,7 @@ function invalidateCache(target, cacheName: string) {
   }
 }
 
-function cacheUpdated(target, cacheName: string) {
+function cacheUpdated(target: object, cacheName: string) {
   const isDirtyMap = targetCacheMap.get(target);
 
   if (isDirtyMap && isDirtyMap[cacheName]) {
@@ -36,8 +40,7 @@ function cacheUpdated(target, cacheName: string) {
   }
 }
 
-
-function getCacheNameMap(target) {
+function getCacheNameMap(target: object) {
   let propertyMap = targetKeyCacheNameMap.get(target);
   if (!propertyMap) {
     propertyMap = {};
@@ -47,7 +50,7 @@ function getCacheNameMap(target) {
   return propertyMap;
 }
 
-function buildPropertyCacheNameMap(properties: string[], target, cacheName: string) {
+function buildPropertyCacheNameMap(properties: string[], target: object, cacheName: string) {
   const propertyCacheMap = getCacheNameMap(target);
 
   for (const propertyName of properties) {
@@ -60,7 +63,7 @@ function buildPropertyCacheNameMap(properties: string[], target, cacheName: stri
   targetKeyCacheNameMap.set(target, propertyCacheMap);
 }
 
-function invalidateCaches(target, propertyCacheMap: TPropertyCacheNameMap, propertyName) {
+function invalidateCaches(target: object, propertyCacheMap: TPropertyCacheNameMap, propertyName) {
   const cachePropertyNames = propertyCacheMap[propertyName];
 
   if (cachePropertyNames) {
@@ -71,36 +74,39 @@ function invalidateCaches(target, propertyCacheMap: TPropertyCacheNameMap, prope
   }
 }
 
-function propertyUpdated(target, propertyName: string) {
+function propertyUpdated(target: object, propertyName: string) {
   const propertyCacheMap = getCacheNameMap(target);
   invalidateCaches(target, propertyCacheMap, propertyName);
 }
 
 export function cache(...fieldNames: string[]) {
-  let cache;
+  let cacheValue: any;
 
   return function (
-    target,
+    target: object,
     key: string,
-    descriptor: PropertyDescriptor
+    descriptor: ICacheDescriptor
   ) {
+    if (!descriptor?.value || typeof descriptor.value !== 'function') {
+      throw Error('No valid property descriptor value. Property descriptor value should be \'() => Promise<any>\'');
+    }
 
     buildPropertyCacheNameMap(fieldNames, target, key);
     const originalMethod = descriptor.value.bind(target);
 
     descriptor.value = async () => {
-      if (!cache || isCacheDirty(target, key)) {
-        cache = await originalMethod();
+      if (!cacheValue || isCacheDirty(target, key)) {
+        cacheValue = await originalMethod();
         cacheUpdated(target, key);
       }
 
-      return cache;
-    }
+      return cacheValue;
+    };
   };
 }
 
-export function tracked(target, key: string) {
-  let value;
+export function tracked(target: object, key: string) {
+  let value: any;
   Object.defineProperty(target, key, {
     configurable: true,
 
@@ -113,5 +119,5 @@ export function tracked(target, key: string) {
       }
       value = newValue;
     }
-  })
+  });
 }

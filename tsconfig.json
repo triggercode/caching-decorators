@@ -2,6 +2,7 @@
   "include": [
     "src/index.ts",
     "src/typings.d.ts",
+    "test/**/*"
   ],
   "compilerOptions": {
     /* Basic Options */
