@@ -1,12 +1,18 @@
 {
-  "name": "glimmer-cache",
+  "name": "caching-decorators",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec './node_modules/ts-node/dist/bin.js' src/index.ts",
     "start:debug": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec 'node --inspect-brk=127.0.0.1 -r ts-node/register' src/index.ts",
-    "test:dev": "NODE_ENV=seed ts-node --files src/ && NODE_ENV=test ts-mocha --inspect=0.0.0.0 --watch --watch-files src, tests/**/*.ts -p tsconfig.test.json \"test/**/*.test.ts\" --timeout 10000"
+    "test:dev": "NODE_ENV=seed ts-node --files src/ && NODE_ENV=test ts-mocha --inspect=0.0.0.0 --watch --watch-files src, tests/**/*.ts -p tsconfig.test.json \"test/**/*.test.ts\" --timeout 10000",
+    "build": "tsc",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint"
   },
   "directories": {
     "lib": "src",
@@ -14,6 +20,9 @@
   },
   "author": "",
   "license": "ISC",
+  "files": [
+    "dist/**/*"
+  ],
   "devDependencies": {
     "@glimmer/tracking": "^1.0.2",
     "@types/expect": "^24.3.0",
@@ -23,7 +32,8 @@
     "sinon": "^9.2.1",
     "ts-mocha": "^8.0.0",
     "ts-node": "^9.0.0",
-    "typescript": "^4.1.2"
+    "typescript": "^4.1.2",
+    "tslint": "6.1.2"
   },
   "dependencies": {
     "@types/node": "^14.14.9",
