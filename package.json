@@ -5,14 +5,17 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec './node_modules/ts-node/dist/bin.js' src/index.ts",
-    "start:debug": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec 'node --inspect-brk=127.0.0.1 -r ts-node/register' src/index.ts",
-    "test:dev": "NODE_ENV=seed ts-node --files src/ && NODE_ENV=test ts-mocha --inspect=0.0.0.0 --watch --watch-files src, tests/**/*.ts -p tsconfig.test.json \"test/**/*.test.ts\" --timeout 10000",
     "build": "tsc",
     "lint": "tslint -p tsconfig.json",
+    "postversion": "git push && git push --tags",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint"
+    "preversion": "npm run lint",
+    "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec './node_modules/ts-node/dist/bin.js' src/index.ts",
+    "start:debug": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ./node_modules/nodemon/bin/nodemon.js --exec 'node --inspect-brk=127.0.0.1 -r ts-node/register' src/index.ts",
+    "test": "NODE_ENV=seed ts-node --files src/ --seed && NODE_ENV=test TS_NODE_FILES=true ts-mocha --exit -p tsconfig.test.json  \"test/**/*.test.ts\" --timeout 10000",
+    "test:dev": "NODE_ENV=seed ts-node --files src/ && NODE_ENV=test ts-mocha --inspect=0.0.0.0 --watch --watch-files src, tests/**/*.ts -p tsconfig.test.json \"test/**/*.test.ts\" --timeout 10000",
+    "version": "git add -A src"
   },
   "directories": {
     "lib": "src",
