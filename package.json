@@ -4,6 +4,10 @@
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/triggercode/caching-decorators.git"
+  },
   "publishConfig": {
     "access": "public"
   },
