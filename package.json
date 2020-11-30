@@ -1,5 +1,5 @@
 {
-  "name": "caching-decorators",
+  "name": "@triggercode/caching-decorators",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
