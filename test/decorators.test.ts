@@ -129,6 +129,23 @@ describe('the \'decorators\' test', () => {
       }
       assert.ok(hasError);
     });
+
+    it('Should also possible to read untracked variables in cache function', async () => {
+      // tslint:disable-next-line: max-classes-per-file
+      class Toast {
+        @tracked trackedVar = 'one';
+        notTrackedVar = 'two';
+
+        @cache('trackedVar')
+        async concat() {
+          return this.trackedVar + this.notTrackedVar;
+        }
+      }
+
+      const test = new Toast();
+
+      assert.strictEqual(await test.concat(), 'onetwo');
+    });
   });
 
 });

@@ -174,11 +174,11 @@ export function cache(...dependantProperties: string[]) {
     }
 
     buildDependencies(dependantProperties, targetObject, methodName);
-    const originalMethod = descriptor.value.bind(targetObject);
+    const originalMethod = descriptor.value;
 
-    descriptor.value = async () => {
+    descriptor.value = async function () {
       if (!cacheValue || isCacheDirty(targetObject, methodName)) {
-        cacheValue = await originalMethod();
+        cacheValue = await originalMethod.apply(this);
         unsetIsCacheDirty(targetObject, methodName);
       }
 
