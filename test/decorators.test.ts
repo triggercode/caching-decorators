@@ -1,6 +1,8 @@
+// tslint: max-classes-per-file
 import assert from 'assert';
 import crypto from 'crypto';
 import { spy } from 'sinon';
+import { runInThisContext } from 'vm';
 import { cache, tracked } from '../src/index';
 
 function hashString(algorithm: string, input: string) {
@@ -132,7 +134,7 @@ describe('the \'decorators\' test', () => {
 
     it('Should also possible to read untracked variables in cache function', async () => {
       // tslint:disable-next-line: max-classes-per-file
-      class Toast {
+      class Tester {
         @tracked trackedVar = 'one';
         notTrackedVar = 'two';
 
@@ -142,9 +144,88 @@ describe('the \'decorators\' test', () => {
         }
       }
 
-      const test = new Toast();
+      const test = new Tester();
 
       assert.strictEqual(await test.concat(), 'onetwo');
+    });
+
+
+
+  });
+
+  describe('multible instance tests', () => {
+    it('same \'@tracked\' properties of diffrent instances should not infuence each other values', async () => {
+      class Tester {
+        @tracked number;
+      }
+
+      const a = new Tester();
+      a.number = 0;
+      const b = new Tester();
+      b.number = 0;
+
+      assert.strictEqual(b.number, 0);
+      assert.strictEqual(a.number, 0);
+
+      a.number++;
+      a.number++;
+      assert.strictEqual(a.number, 2);
+      b.number++;
+      assert.strictEqual(b.number, 1);
+      assert.strictEqual(a.number, 2);
+    });
+
+    it('same \'@tracked\' properties of diffrent instances should not invalided cache of other instance', async () => {
+
+      const getNumberSpy = spy();
+
+      class Tester {
+        @tracked number;
+        name: string;
+
+        constructor(name: string) {
+          this.name = name;
+        }
+
+        @cache('number')
+        async getNumber() {
+          getNumberSpy(this.name);
+          return this.number;
+        }
+      }
+
+      const a = new Tester('A');
+      a.number = 0;
+      const b = new Tester('B');
+      b.number = 0;
+
+      assert.strictEqual((await a.getNumber()), 0);
+      assert.strictEqual((await a.getNumber()), 0);
+      assert.strictEqual((await b.getNumber()), 0);
+      assert.strictEqual((await b.getNumber()), 0);
+      assert.strictEqual(getNumberSpy.callCount, 2);
+      assert.strictEqual(getNumberSpy.firstCall.firstArg, 'A');
+      assert.strictEqual(getNumberSpy.secondCall.firstArg, 'B');
+      getNumberSpy.resetHistory();
+
+      a.number++;
+      a.number++;
+      assert.strictEqual((await a.getNumber()), 2);
+      assert.strictEqual((await a.getNumber()), 2);
+      assert.strictEqual((await b.getNumber()), 0);
+      assert.strictEqual((await b.getNumber()), 0);
+      assert.strictEqual(getNumberSpy.callCount, 1);
+      assert.strictEqual(getNumberSpy.firstCall.firstArg, 'A');
+      getNumberSpy.resetHistory();
+
+      b.number++;
+      assert.strictEqual((await a.getNumber()), 2);
+      assert.strictEqual((await a.getNumber()), 2);
+      assert.strictEqual((await b.getNumber()), 1);
+      assert.strictEqual((await b.getNumber()), 1);
+      assert.strictEqual(getNumberSpy.callCount, 1);
+      assert.strictEqual(getNumberSpy.firstCall.firstArg, 'B');
+      getNumberSpy.resetHistory();
     });
   });
 

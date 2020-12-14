@@ -140,18 +140,18 @@ function setDirtyState(targetObject: object, methodName: TMethodName) {
 /**
  * Tracked changes of a property to reference them in the cache method decorator
  */
-export function tracked(targetObject: object, propertyName: string) {
-  let value: any;
-  Object.defineProperty(targetObject, propertyName, {
+export function tracked(targetClassObject: object, propertyName: string) {
+  const objectToPropertyValue = new WeakMap<object, any>();
+  Object.defineProperty(targetClassObject, propertyName, {
     configurable: true, // property can change the type
     get() {
-      return value;
+      return objectToPropertyValue.get(this);
     },
     set(newValue) {
-      if (targetObject[propertyName] !== newValue) {
-        updateDirtyStates(targetObject, propertyName);
+      if (this[propertyName] !== newValue) {
+        updateDirtyStates(this, propertyName);
       }
-      value = newValue;
+      objectToPropertyValue.set(this, newValue);
     }
   });
 }
@@ -162,10 +162,11 @@ export function tracked(targetObject: object, propertyName: string) {
  * @param {...string} dependantProperties - Depending properties on which the cache should be invalidated.
  */
 export function cache(...dependantProperties: string[]) {
-  let cacheValue: any;
+  const targetObjectToIsInizialized = new WeakMap<object, true>();
+  const targetObjectToCacheValue = new WeakMap<object, any>();
 
   return function (
-    targetObject: object,
+    _targetClassObject: object,
     methodName: TMethodName,
     descriptor: ICacheDescriptor
   ) {
@@ -173,16 +174,24 @@ export function cache(...dependantProperties: string[]) {
       throw Error('No valid property descriptor value. Property descriptor value should be \'() => Promise<any>\'');
     }
 
-    buildDependencies(dependantProperties, targetObject, methodName);
     const originalMethod = descriptor.value;
 
     descriptor.value = async function () {
-      if (!cacheValue || isCacheDirty(targetObject, methodName)) {
-        cacheValue = await originalMethod.apply(this);
-        unsetIsCacheDirty(targetObject, methodName);
+      const targetObject = this;
+      if (!targetObjectToIsInizialized.has(targetObject)) {
+        // build dependencies on first execution
+        buildDependencies(dependantProperties, targetObject, methodName);
+        targetObjectToIsInizialized.set(targetObject, true);
       }
 
-      return cacheValue;
+      if (!targetObjectToCacheValue.has(targetObject) || isCacheDirty(targetObject, methodName)) {
+        const cacheValue = await originalMethod.apply(targetObject);
+        targetObjectToCacheValue.set(targetObject, cacheValue);
+        unsetIsCacheDirty(targetObject, methodName);
+        return cacheValue;
+      }
+
+      return targetObjectToCacheValue.get(targetObject);
     };
   };
 }
