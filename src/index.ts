@@ -3,6 +3,8 @@
 *******************************************************************************/
 type TMethodName = string;
 
+type TTargetClassObject = object;
+
 type TIsDirtyMap = {
   [methodName: string]: true;
 };
@@ -19,7 +21,7 @@ interface ICacheDescriptor extends TypedPropertyDescriptor<any> {
  * Variables
 *******************************************************************************/
 const objectToDirtyStates = new WeakMap<object, TIsDirtyMap>();
-const objectToDependencies = new WeakMap<object, TPropertiesDependencies>();
+const classObjectToDependencies = new WeakMap<TTargetClassObject, TPropertiesDependencies>();
 
 /*******************************************************************************
  * Functions
@@ -28,8 +30,8 @@ const objectToDependencies = new WeakMap<object, TPropertiesDependencies>();
 /**
  * Update the dirty states for the property.
  */
-function updateDirtyStates(targetObject: object, propertyName: string) {
-  const dependencies = getDependencies(targetObject);
+function updateDirtyStates(targetClassObject: TTargetClassObject, targetObject: object, propertyName: string) {
+  const dependencies = getDependencies(targetClassObject);
   setDirtyStates(targetObject, dependencies, propertyName);
 }
 
@@ -52,11 +54,11 @@ function updateDirtyStates(targetObject: object, propertyName: string) {
  * }
  *
  * @param {...string} dependantProps - Depending properties on which the cache should be invalidated.
- * @param {object} targetObject - class object
+ * @param {object} targetClassObject - class object
  * @param {TMethodName} methodName - cache name
  */
-function buildDependencies(dependantProps: string[], targetObject: object, methodName: TMethodName) {
-  const dependencies = getDependencies(targetObject);
+function buildDependencies(dependantProps: string[], targetClassObject: TTargetClassObject, methodName: TMethodName) {
+  const dependencies = getDependencies(targetClassObject);
 
   for (const dependantProp of dependantProps) {
     if (!dependencies[dependantProp]) {
@@ -90,12 +92,12 @@ function unsetIsCacheDirty(targetObject: object, methodName: TMethodName) {
 /**
  * Fetches the dependencies for all properties and methods of one targetObject
  */
-function getDependencies(targetObject: object) {
-  let propertiesDependencies = objectToDependencies.get(targetObject);
+function getDependencies(targetClassObject: TTargetClassObject) {
+  let propertiesDependencies = classObjectToDependencies.get(targetClassObject);
   // if empty -> initialize map with empty object
   if (!propertiesDependencies) {
     propertiesDependencies = {};
-    objectToDependencies.set(targetObject, propertiesDependencies);
+    classObjectToDependencies.set(targetClassObject, propertiesDependencies);
   }
 
   return propertiesDependencies;
@@ -140,7 +142,7 @@ function setDirtyState(targetObject: object, methodName: TMethodName) {
 /**
  * Tracked changes of a property to reference them in the cache method decorator
  */
-export function tracked(targetClassObject: object, propertyName: string) {
+export function tracked(targetClassObject: TTargetClassObject, propertyName: string) {
   const objectToPropertyValue = new WeakMap<object, any>();
   Object.defineProperty(targetClassObject, propertyName, {
     configurable: true, // property can change the type
@@ -149,7 +151,7 @@ export function tracked(targetClassObject: object, propertyName: string) {
     },
     set(newValue) {
       if (this[propertyName] !== newValue) {
-        updateDirtyStates(this, propertyName);
+        updateDirtyStates(targetClassObject, this, propertyName);
       }
       objectToPropertyValue.set(this, newValue);
     }
@@ -162,11 +164,10 @@ export function tracked(targetClassObject: object, propertyName: string) {
  * @param {...string} dependantProperties - Depending properties on which the cache should be invalidated.
  */
 export function cache(...dependantProperties: string[]) {
-  const targetObjectToIsInizialized = new WeakMap<object, true>();
   const targetObjectToCacheValue = new WeakMap<object, any>();
 
   return function (
-    _targetClassObject: object,
+    targetClassObject: TTargetClassObject,
     methodName: TMethodName,
     descriptor: ICacheDescriptor
   ) {
@@ -174,15 +175,11 @@ export function cache(...dependantProperties: string[]) {
       throw Error('No valid property descriptor value. Property descriptor value should be \'() => Promise<any>\'');
     }
 
+    buildDependencies(dependantProperties, targetClassObject, methodName);
     const originalMethod = descriptor.value;
 
     descriptor.value = async function () {
       const targetObject = this;
-      if (!targetObjectToIsInizialized.has(targetObject)) {
-        // build dependencies on first execution
-        buildDependencies(dependantProperties, targetObject, methodName);
-        targetObjectToIsInizialized.set(targetObject, true);
-      }
 
       if (!targetObjectToCacheValue.has(targetObject) || isCacheDirty(targetObject, methodName)) {
         const cacheValue = await originalMethod.apply(targetObject);
